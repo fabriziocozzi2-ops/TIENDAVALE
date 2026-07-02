@@ -20,11 +20,20 @@ export default function OrderSummary({
     <div className="bg-morelia-bg-alt p-6">
       <ul className="space-y-4 mb-6">
         {items.map((item) => (
-          <li key={item.productId} className="flex gap-3 items-center">
+          <li key={item.lineId} className="flex gap-3 items-start">
             <ProductImage image={item.image} alt={item.name} className="w-14 h-14 shrink-0" />
             <div className="flex-1 text-sm">
               <p>{item.name}</p>
               <p className="text-morelia-text-soft">× {item.qty}</p>
+              {item.customization && item.customization.length > 0 && (
+                <ul className="mt-1 space-y-0.5">
+                  {item.customization.map((c) => (
+                    <li key={c.groupId} className="text-xs text-morelia-text-soft">
+                      {c.groupLabel}: {c.valueLabel}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             <span className="text-sm font-medium">
               {formatPrice(item.price * item.qty)}

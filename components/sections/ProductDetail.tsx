@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/format";
 import { useCartStore } from "@/lib/store/cartStore";
 import ProductImage from "@/components/ui/ProductImage";
 import ProductCard from "@/components/ui/ProductCard";
+import CustomizationForm from "@/components/ui/CustomizationForm";
 
 export default function ProductDetail({
   product,
@@ -21,6 +22,7 @@ export default function ProductDetail({
 
   const addItem = useCartStore((s) => s.addItem);
   const hasProduct = useCartStore((s) => s.hasProduct(product.id));
+  const isCustomizable = !!product.customization?.length;
 
   return (
     <>
@@ -71,6 +73,7 @@ export default function ProductDetail({
               </span>
             )}
             <span className="text-xl font-medium">
+              {isCustomizable ? "Desde " : ""}
               {formatPrice(product.price)}
             </span>
           </div>
@@ -80,42 +83,48 @@ export default function ProductDetail({
             </span>
           )}
 
-          <div className="flex items-center gap-4 mb-2 mt-4">
-            <div className="flex items-center border border-morelia-text/20">
-              <button
-                className="px-3 py-2"
-                onClick={() => setQty((q) => Math.max(1, q - 1))}
-                aria-label="Restar"
-              >
-                <Minus size={14} />
-              </button>
-              <span className="px-4 text-sm">{qty}</span>
-              <button
-                className="px-3 py-2"
-                onClick={() => setQty((q) => q + 1)}
-                aria-label="Sumar"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
-            <button
-              onClick={() => addItem(product, qty)}
-              className="flex-1 bg-[var(--color-button)] text-white py-3 text-sm uppercase tracking-wide hover:opacity-90 transition-opacity"
-            >
-              Agregar al carrito
-            </button>
-          </div>
+          {isCustomizable ? (
+            <CustomizationForm product={product} />
+          ) : (
+            <>
+              <div className="flex items-center gap-4 mb-2 mt-4">
+                <div className="flex items-center border border-morelia-text/20">
+                  <button
+                    className="px-3 py-2"
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    aria-label="Restar"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="px-4 text-sm">{qty}</span>
+                  <button
+                    className="px-3 py-2"
+                    onClick={() => setQty((q) => q + 1)}
+                    aria-label="Sumar"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+                <button
+                  onClick={() => addItem(product, qty)}
+                  className="flex-1 bg-[var(--color-button)] text-white py-3 text-sm uppercase tracking-wide hover:opacity-90 transition-opacity"
+                >
+                  Agregar al carrito
+                </button>
+              </div>
 
-          {hasProduct && (
-            <p className="text-sm text-morelia-text-soft mb-6">
-              Ya agregaste este producto.{" "}
-              <button
-                onClick={() => useCartStore.getState().openDrawer()}
-                className="underline"
-              >
-                Ver carrito
-              </button>
-            </p>
+              {hasProduct && (
+                <p className="text-sm text-morelia-text-soft mb-6">
+                  Ya agregaste este producto.{" "}
+                  <button
+                    onClick={() => useCartStore.getState().openDrawer()}
+                    className="underline"
+                  >
+                    Ver carrito
+                  </button>
+                </p>
+              )}
+            </>
           )}
 
           <p

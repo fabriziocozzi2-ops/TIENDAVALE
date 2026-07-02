@@ -46,7 +46,7 @@ export default function CartDrawer() {
           ) : (
             <ul className="space-y-6">
               {items.map((item) => (
-                <li key={item.productId} className="flex gap-4">
+                <li key={item.lineId} className="flex gap-4">
                   <ProductImage
                     image={item.image}
                     alt={item.name}
@@ -56,12 +56,22 @@ export default function CartDrawer() {
                     <div className="flex items-start justify-between">
                       <p className="text-sm">{item.name}</p>
                       <button
-                        onClick={() => removeItem(item.productId)}
+                        onClick={() => removeItem(item.lineId)}
                         className="text-xs text-morelia-error hover:underline"
                       >
                         Borrar
                       </button>
                     </div>
+                    {item.customization && item.customization.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {item.customization.map((c) => (
+                          <li key={c.groupId} className="text-xs text-morelia-text-soft">
+                            {c.groupLabel}: {c.valueLabel}
+                            {c.priceDelta > 0 && ` (+${formatPrice(c.priceDelta)})`}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     {item.freeShipping && (
                       <p className="text-xs text-[var(--color-accent)] mt-1">
                         Envío gratis
@@ -74,7 +84,7 @@ export default function CartDrawer() {
                       <div className="flex items-center border border-morelia-text/20">
                         <button
                           className="px-2 py-1"
-                          onClick={() => updateQty(item.productId, item.qty - 1)}
+                          onClick={() => updateQty(item.lineId, item.qty - 1)}
                           aria-label="Restar"
                         >
                           <Minus size={12} />
@@ -82,7 +92,7 @@ export default function CartDrawer() {
                         <span className="px-3 text-sm">{item.qty}</span>
                         <button
                           className="px-2 py-1"
-                          onClick={() => updateQty(item.productId, item.qty + 1)}
+                          onClick={() => updateQty(item.lineId, item.qty + 1)}
                           aria-label="Sumar"
                         >
                           <Plus size={12} />

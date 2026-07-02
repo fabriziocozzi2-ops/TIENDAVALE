@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product } from "@/lib/types";
 import { categories } from "@/lib/data/categories";
+import CustomizationBuilder from "@/components/admin/CustomizationBuilder";
 
 const emptyProduct: Omit<Product, "id"> = {
   name: "",
@@ -19,6 +20,7 @@ const emptyProduct: Omit<Product, "id"> = {
   featuredCategory: false,
   stock: null,
   sku: "",
+  customization: [],
 };
 
 export default function ProductForm({
@@ -184,6 +186,19 @@ export default function ProductForm({
           />
           Envío gratis
         </label>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5">
+        <h2 className="text-sm font-medium mb-1">Personalización</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Definí las opciones que tus clientes van a poder elegir en este
+          producto (colores, charms, extras, cantidad, texto libre). Cada
+          elección puede sumar un costo extra que se calcula automáticamente.
+        </p>
+        <CustomizationBuilder
+          groups={form.customization || []}
+          onChange={(groups) => update("customization", groups)}
+        />
       </section>
 
       <section className="bg-white border border-gray-200 rounded p-5">

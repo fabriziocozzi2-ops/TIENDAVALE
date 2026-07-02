@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Sliders } from "lucide-react";
 import { Product } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 import { useCartStore } from "@/lib/store/cartStore";
@@ -9,6 +9,7 @@ import ProductImage from "@/components/ui/ProductImage";
 
 export default function ProductCard({ product }: { product: Product }) {
   const addItem = useCartStore((s) => s.addItem);
+  const requiresOptions = !!product.customization?.some((g) => g.required);
 
   function handleBuy(e: React.MouseEvent) {
     e.preventDefault();
@@ -46,17 +47,27 @@ export default function ProductCard({ product }: { product: Product }) {
               </span>
             )}
             <span className="text-sm font-medium">
+              {requiresOptions ? "Desde " : ""}
               {formatPrice(product.price)}
             </span>
           </div>
         </div>
       </Link>
-      <button
-        onClick={handleBuy}
-        className="mt-3 w-full flex items-center justify-center gap-2 text-xs uppercase tracking-wide py-2 hover:opacity-60 transition-opacity"
-      >
-        Comprar <ShoppingCart size={14} strokeWidth={1.5} />
-      </button>
+      {requiresOptions ? (
+        <Link
+          href={`/productos/${product.slug}`}
+          className="mt-3 w-full flex items-center justify-center gap-2 text-xs uppercase tracking-wide py-2 hover:opacity-60 transition-opacity"
+        >
+          Elegir opciones <Sliders size={14} strokeWidth={1.5} />
+        </Link>
+      ) : (
+        <button
+          onClick={handleBuy}
+          className="mt-3 w-full flex items-center justify-center gap-2 text-xs uppercase tracking-wide py-2 hover:opacity-60 transition-opacity"
+        >
+          Comprar <ShoppingCart size={14} strokeWidth={1.5} />
+        </button>
+      )}
     </div>
   );
 }

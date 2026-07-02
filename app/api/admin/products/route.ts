@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
     featuredCategory: body.featuredCategory ?? false,
     stock: body.stock ?? null,
     sku: body.sku || "",
+    customization: body.customization ?? [],
   };
 
   db.products.push(product);

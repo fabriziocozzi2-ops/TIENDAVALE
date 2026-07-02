@@ -64,6 +64,49 @@ export const products: Product[] = [
     featuredHome: true,
     stock: 12,
     sku: "CIN-KEN-004",
+    customization: [
+      {
+        id: "talla",
+        label: "Talla",
+        type: "choice",
+        required: true,
+        choices: [
+          { id: "s", label: "S", priceDelta: 0 },
+          { id: "m", label: "M", priceDelta: 0 },
+          { id: "l", label: "L", priceDelta: 0 },
+          { id: "xl", label: "XL", priceDelta: 0 },
+        ],
+      },
+      {
+        id: "color",
+        label: "Color",
+        type: "swatch",
+        required: true,
+        choices: [
+          { id: "negro", label: "Negro", priceDelta: 0, color: "#1a1a1a" },
+          { id: "marron", label: "Marrón", priceDelta: 0, color: "#5b3a24" },
+          { id: "camel", label: "Camel", priceDelta: 0, color: "#c19a6b" },
+        ],
+      },
+      {
+        id: "hebilla",
+        label: "Hebilla",
+        type: "choice",
+        required: false,
+        choices: [
+          { id: "clasica", label: "Clásica", priceDelta: 0 },
+          { id: "dorada", label: "Dorada", priceDelta: 800 },
+          { id: "plateada", label: "Plateada", priceDelta: 800 },
+        ],
+      },
+      {
+        id: "grabado",
+        label: "Grabado en la hebilla",
+        type: "text",
+        required: false,
+        placeholder: "Ej: Iniciales a grabar (opcional)",
+      },
+    ],
   },
   {
     id: 5,
@@ -80,6 +123,48 @@ export const products: Product[] = [
     featuredHome: true,
     stock: 8,
     sku: "REL-BON-005",
+    customization: [
+      {
+        id: "correa",
+        label: "Color de correa",
+        type: "swatch",
+        required: true,
+        choices: [
+          { id: "marron", label: "Marrón", priceDelta: 0, color: "#5b3a24" },
+          { id: "negro", label: "Negro", priceDelta: 0, color: "#1a1a1a" },
+          { id: "camel", label: "Camel", priceDelta: 0, color: "#c19a6b" },
+        ],
+      },
+      {
+        id: "extras",
+        label: "Extras",
+        type: "multi-choice",
+        required: false,
+        maxSelections: 2,
+        helpText: "Podés elegir hasta 2 extras.",
+        choices: [
+          { id: "caja-regalo", label: "Caja de regalo", priceDelta: 500 },
+          { id: "estuche-viaje", label: "Estuche de viaje", priceDelta: 900 },
+          { id: "kit-limpieza", label: "Kit de limpieza", priceDelta: 350 },
+        ],
+      },
+      {
+        id: "correas-extra",
+        label: "Correas de repuesto",
+        type: "quantity",
+        required: false,
+        includedQty: 0,
+        extraUnitPrice: 3500,
+        maxQty: 3,
+      },
+      {
+        id: "grabado",
+        label: "Grabado en el dorso",
+        type: "text",
+        required: false,
+        placeholder: "Ej: Texto a grabar (opcional)",
+      },
+    ],
   },
   {
     id: 6,
