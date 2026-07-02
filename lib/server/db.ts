@@ -1,4 +1,5 @@
-import { promises as fs } from "fs";
+import { promises as fs, constants as fsConstants } from "fs";
+import os from "os";
 import path from "path";
 import { Coupon, Order, Product } from "@/lib/types";
 import { products as seedProducts } from "@/lib/data/products";
@@ -22,8 +23,6 @@ export interface DB {
   theme: ThemeSettings;
   orderSeq: number;
 }
-
-const DB_PATH = path.join(process.cwd(), "data", "db.json");
 
 const defaultTheme: ThemeSettings = {
   colors: {
@@ -49,9 +48,29 @@ const defaultTheme: ThemeSettings = {
   },
 };
 
-async function ensureDB(): Promise<void> {
+// Serverless platforms (e.g. Vercel) ship a read-only filesystem except
+// for os.tmpdir(). Resolve to a writable location so reads/writes don't
+// throw EROFS in production; falls back to the project's /data folder
+// for local dev and traditional Node servers.
+let resolvedDbPath: string | null = null;
+
+async function resolveDbPath(): Promise<string> {
+  if (resolvedDbPath) return resolvedDbPath;
+
+  const primary = path.join(process.cwd(), "data", "db.json");
   try {
-    await fs.access(DB_PATH);
+    await fs.mkdir(path.dirname(primary), { recursive: true });
+    await fs.access(path.dirname(primary), fsConstants.W_OK);
+    resolvedDbPath = primary;
+  } catch {
+    resolvedDbPath = path.join(os.tmpdir(), "morelia-db.json");
+  }
+  return resolvedDbPath;
+}
+
+async function ensureDB(dbPath: string): Promise<void> {
+  try {
+    await fs.access(dbPath);
   } catch {
     const initial: DB = {
       products: seedProducts,
@@ -60,19 +79,21 @@ async function ensureDB(): Promise<void> {
       theme: defaultTheme,
       orderSeq: 1000,
     };
-    await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
-    await fs.writeFile(DB_PATH, JSON.stringify(initial, null, 2));
+    await fs.mkdir(path.dirname(dbPath), { recursive: true });
+    await fs.writeFile(dbPath, JSON.stringify(initial, null, 2));
   }
 }
 
 export async function readDB(): Promise<DB> {
-  await ensureDB();
-  const raw = await fs.readFile(DB_PATH, "utf-8");
+  const dbPath = await resolveDbPath();
+  await ensureDB(dbPath);
+  const raw = await fs.readFile(dbPath, "utf-8");
   const db = JSON.parse(raw) as DB;
   if (!db.coupons) db.coupons = [];
   return db;
 }
 
 export async function writeDB(db: DB): Promise<void> {
-  await fs.writeFile(DB_PATH, JSON.stringify(db, null, 2));
+  const dbPath = await resolveDbPath();
+  await fs.writeFile(dbPath, JSON.stringify(db, null, 2));
 }
