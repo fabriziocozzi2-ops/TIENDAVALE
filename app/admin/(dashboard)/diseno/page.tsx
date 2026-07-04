@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowUp, ArrowDown, Eye, EyeOff } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUp, ArrowDown, Eye, EyeOff, Upload, X } from "lucide-react";
 import { ThemeSettings } from "@/lib/server/db";
 
 export default function AdminDisenoPage() {
   const [theme, setTheme] = useState<ThemeSettings | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/admin/theme")
@@ -49,6 +51,29 @@ export default function AdminDisenoPage() {
     setSaved(false);
   }
 
+  async function handleLogoUpload(file: File | undefined) {
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        setTheme((t) => (t ? { ...t, logoUrl: data.url } : t));
+        setSaved(false);
+      }
+    } finally {
+      setUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  }
+
+  function removeLogo() {
+    setTheme((t) => (t ? { ...t, logoUrl: undefined } : t));
+    setSaved(false);
+  }
+
   async function handlePublish() {
     if (!theme) return;
     setSaving(true);
@@ -66,6 +91,42 @@ export default function AdminDisenoPage() {
   return (
     <div className="max-w-2xl">
       <h1 className="font-serif text-2xl mb-6">Diseño</h1>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <h2 className="text-sm font-medium mb-4">Logo de tu marca</h2>
+        <div className="flex items-center gap-4">
+          <div className="w-20 h-20 border border-dashed border-gray-300 rounded flex items-center justify-center overflow-hidden bg-gray-50">
+            {theme.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={theme.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+              <span className="font-serif text-lg text-gray-300">DS</span>
+            )}
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm text-[#0070F3] cursor-pointer w-fit">
+              <Upload size={14} />
+              {uploadingLogo ? "Subiendo..." : "Subir logo"}
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                className="hidden"
+                disabled={uploadingLogo}
+                onChange={(e) => handleLogoUpload(e.target.files?.[0])}
+              />
+            </label>
+            {theme.logoUrl && (
+              <button
+                onClick={removeLogo}
+                className="flex items-center gap-1 text-xs text-red-600 mt-2"
+              >
+                <X size={12} /> Quitar logo (usar texto &ldquo;DS&rdquo;)
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
 
       <section className="bg-white border border-gray-200 rounded p-5 mb-6">
         <h2 className="text-sm font-medium mb-4">Colores de tu marca</h2>

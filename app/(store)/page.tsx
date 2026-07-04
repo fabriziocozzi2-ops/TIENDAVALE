@@ -32,7 +32,7 @@ export default async function Home() {
     welcome: <Tagline key="welcome" />,
     slider: <HeroSlider key="slider" />,
     featured: <FeaturedProducts key="featured" products={featuredProducts} />,
-    categories: <CategoryShowcase key="categories" />,
+    categories: <CategoryShowcase key="categories" categories={db.categories} />,
     mission: <BrandMission key="mission" />,
     featuredDetail: featuredProduct ? (
       <FeaturedProductDetail key="featuredDetail" product={featuredProduct} />

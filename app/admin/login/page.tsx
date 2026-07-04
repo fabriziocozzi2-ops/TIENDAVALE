@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-morelia-bg-alt px-4">
       <div className="bg-white w-full max-w-sm p-8 shadow-sm">
-        <h1 className="font-serif text-2xl text-center mb-1">MORELIA</h1>
+        <h1 className="font-serif text-2xl text-center mb-1">DS</h1>
         <p className="text-center text-sm text-morelia-text-soft mb-8">
           Panel de administración
         </p>

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { getCategoryBySlug } from "@/lib/data/categories";
-import { getProductsByCategory } from "@/lib/server/catalog";
+import { getCategoryBySlug, getProductsByCategory } from "@/lib/server/catalog";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import CategoryProductGrid from "@/components/sections/CategoryProductGrid";
 
@@ -11,7 +10,7 @@ export default async function CategoryPage({
 }: {
   params: { categoria: string };
 }) {
-  const category = getCategoryBySlug(params.categoria);
+  const category = await getCategoryBySlug(params.categoria);
   if (!category) notFound();
 
   const products = await getProductsByCategory(category.slug);

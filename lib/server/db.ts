@@ -1,8 +1,10 @@
-import { Coupon, Order, Product } from "@/lib/types";
+import { Category, Coupon, Order, Product } from "@/lib/types";
 import { products as seedProducts } from "@/lib/data/products";
+import { categories as seedCategories } from "@/lib/data/categories";
 import { getSupabase } from "@/lib/server/supabase";
 
 export interface ThemeSettings {
+  logoUrl?: string;
   colors: {
     background: string;
     text: string;
@@ -18,6 +20,7 @@ export interface DB {
   products: Product[];
   orders: Order[];
   coupons: Coupon[];
+  categories: Category[];
   theme: ThemeSettings;
   orderSeq: number;
 }
@@ -53,7 +56,10 @@ export async function readDB(): Promise<DB> {
     supabase.from("products").select("id, data"),
     supabase.from("orders").select("id, data").order("created_at", { ascending: false }),
     supabase.from("coupons").select("id, data"),
-    supabase.from("app_state").select("key, value").in("key", ["theme", "order_seq"]),
+    supabase
+      .from("app_state")
+      .select("key, value")
+      .in("key", ["theme", "order_seq", "categories"]),
   ]);
 
   if (productsRes.error) throw productsRes.error;
@@ -86,7 +92,13 @@ export async function readDB(): Promise<DB> {
     orderSeq = 1000;
   }
 
-  return { products, orders, coupons, theme, orderSeq };
+  let categories = stateMap.get("categories") as Category[] | undefined;
+  if (!categories) {
+    await supabase.from("app_state").upsert({ key: "categories", value: seedCategories });
+    categories = seedCategories;
+  }
+
+  return { products, orders, coupons, categories, theme, orderSeq };
 }
 
 export async function writeDB(db: DB): Promise<void> {
@@ -145,5 +157,6 @@ export async function writeDB(db: DB): Promise<void> {
   await Promise.all([
     supabase.from("app_state").upsert({ key: "theme", value: db.theme }),
     supabase.from("app_state").upsert({ key: "order_seq", value: db.orderSeq }),
+    supabase.from("app_state").upsert({ key: "categories", value: db.categories }),
   ]);
 }

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Product } from "@/lib/types";
-import { categories } from "@/lib/data/categories";
+import { Category, Product } from "@/lib/types";
 import CustomizationBuilder from "@/components/admin/CustomizationBuilder";
 import ImageUploader from "@/components/admin/ImageUploader";
 
@@ -26,8 +25,10 @@ const emptyProduct: Omit<Product, "id"> = {
 
 export default function ProductForm({
   product,
+  categories,
 }: {
   product?: Product;
+  categories: Category[];
 }) {
   const router = useRouter();
   const [form, setForm] = useState<Omit<Product, "id">>(

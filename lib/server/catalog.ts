@@ -1,5 +1,5 @@
 import { readDB } from "@/lib/server/db";
-import { Product } from "@/lib/types";
+import { Category, Product } from "@/lib/types";
 
 export async function getAllProducts(): Promise<Product[]> {
   const db = await readDB();
@@ -26,4 +26,14 @@ export async function getRelatedProducts(product: Product, count = 4): Promise<P
   return db.products
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, count);
+}
+
+export async function getAllCategories(): Promise<Category[]> {
+  const db = await readDB();
+  return db.categories;
+}
+
+export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
+  const db = await readDB();
+  return db.categories.find((c) => c.slug === slug);
 }

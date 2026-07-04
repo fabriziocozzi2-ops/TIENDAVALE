@@ -65,14 +65,14 @@ export default function Footer() {
             <h3 className="text-white font-medium mb-4">Contacto</h3>
             <p>541111111</p>
             <p>+5491132909</p>
-            <p>morelia@moreliastore.com</p>
+            <p>info@dsaccesorios.com</p>
             <p>4105 Av Libertador</p>
           </div>
         </div>
 
         <div className="border-t border-white/10 pt-8 text-xs text-white/40 flex flex-col items-center gap-2 text-center">
           <p>
-            Copyright Morelia Accesorios - {year}. Todos los derechos
+            Copyright DS - {year}. Todos los derechos
             reservados.
           </p>
           <p>

@@ -15,7 +15,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Morelia Accesorios",
+  title: "DS",
   description:
     "Accesorios de cuero ecológico: relojes, bolsos, cinturones, billeteras y estuches.",
 };

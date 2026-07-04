@@ -20,7 +20,7 @@ export default async function EditProductPage({
         ← Volver
       </Link>
       <h1 className="font-serif text-2xl mb-6">{product.name}</h1>
-      <ProductForm product={product} />
+      <ProductForm product={product} categories={db.categories} />
     </div>
   );
 }

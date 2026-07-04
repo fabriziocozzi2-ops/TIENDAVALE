@@ -21,8 +21,8 @@ export default function ContactoPage() {
           </p>
           <p>
             <span className="text-morelia-text-soft">Email: </span>
-            <a href="mailto:morelia@moreliastore.com" className="underline">
-              morelia@moreliastore.com
+            <a href="mailto:info@dsaccesorios.com" className="underline">
+              info@dsaccesorios.com
             </a>
           </p>
           <p>

@@ -10,12 +10,14 @@ import {
   Percent,
   Paintbrush,
   LogOut,
+  FolderTree,
 } from "lucide-react";
 
 const navItems = [
   { href: "/admin/inicio", label: "Inicio", icon: LayoutDashboard },
   { href: "/admin/ventas", label: "Ventas", icon: ShoppingCart },
   { href: "/admin/productos", label: "Productos", icon: Tag },
+  { href: "/admin/categorias", label: "Categorías", icon: FolderTree },
   { href: "/admin/clientes", label: "Clientes", icon: Users },
   { href: "/admin/descuentos", label: "Descuentos", icon: Percent },
   { href: "/admin/diseno", label: "Diseño", icon: Paintbrush },
@@ -34,7 +36,7 @@ export default function Sidebar() {
   return (
     <aside className="w-[260px] shrink-0 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
       <div className="px-6 py-5 border-b border-gray-200">
-        <span className="font-serif text-lg tracking-widest2">MORELIA</span>
+        <span className="font-serif text-lg tracking-widest2">DS</span>
         <p className="text-[11px] text-gray-400 mt-0.5">Panel administrador</p>
       </div>
 

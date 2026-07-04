@@ -5,9 +5,15 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, User, ShoppingCart, X, ChevronDown } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
-import { categories } from "@/lib/data/categories";
+import { Category } from "@/lib/types";
 
-export default function Header() {
+export default function Header({
+  categories,
+  logoUrl,
+}: {
+  categories: Category[];
+  logoUrl?: string;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
@@ -53,7 +59,12 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 gap-6">
           <div className="flex items-center gap-8">
             <Link href="/" className="font-serif text-xl tracking-widest2 font-medium shrink-0">
-              MORELIA
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoUrl} alt="DS" className="h-9 w-auto" />
+              ) : (
+                "DS"
+              )}
             </Link>
 
             <nav className="hidden md:flex items-center gap-6 text-sm">

@@ -1,9 +1,4 @@
-export type CategorySlug =
-  | "relojes"
-  | "bolsos"
-  | "cinturones"
-  | "billeteras"
-  | "estuches";
+export type CategorySlug = string;
 
 export interface Category {
   slug: CategorySlug;

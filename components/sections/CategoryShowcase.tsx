@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { categories } from "@/lib/data/categories";
+import { Category } from "@/lib/types";
 import ProductImage from "@/components/ui/ProductImage";
 
-export default function CategoryShowcase() {
+export default function CategoryShowcase({ categories }: { categories: Category[] }) {
   return (
     <section className="py-16 px-4 max-w-8xl mx-auto">
       <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">

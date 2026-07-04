@@ -1,4 +1,4 @@
-# Morelia Accesorios
+# DS
 
 Tienda e-commerce inspirada en el diseño de Tiendanube, con tienda pública y
 panel de administración, construida con Next.js 14 (App Router), TypeScript,

@@ -14,7 +14,7 @@ export default async function StoreLayout({
   children: React.ReactNode;
 }) {
   const db = await readDB();
-  const { colors } = db.theme;
+  const { colors, logoUrl } = db.theme;
 
   return (
     <div
@@ -27,7 +27,7 @@ export default async function StoreLayout({
         } as React.CSSProperties
       }
     >
-      <Header />
+      <Header categories={db.categories} logoUrl={logoUrl} />
       {children}
       <Footer />
       <CartDrawer />
