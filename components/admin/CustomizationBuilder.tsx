@@ -1,7 +1,9 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Plus, Trash2, ImagePlus } from "lucide-react";
 import { CustomizationChoice, CustomizationGroup, CustomizationGroupType } from "@/lib/types";
+import ProductImage from "@/components/ui/ProductImage";
 
 const typeLabels: Record<CustomizationGroupType, string> = {
   choice: "Selección única (imagen)",
@@ -164,6 +166,12 @@ export default function CustomizationBuilder({
               <div className="space-y-2">
                 {group.choices?.map((choice) => (
                   <div key={choice.id} className="flex items-center gap-2">
+                    {(group.type === "choice" || group.type === "swatch") && (
+                      <ChoiceImagePicker
+                        image={choice.image}
+                        onChange={(image) => updateChoice(group, choice.id, { image })}
+                      />
+                    )}
                     <input
                       value={choice.label}
                       onChange={(e) => updateChoice(group, choice.id, { label: e.target.value })}
@@ -201,6 +209,12 @@ export default function CustomizationBuilder({
                   </div>
                 ))}
               </div>
+              {(group.type === "choice" || group.type === "swatch") && (
+                <p className="text-xs text-gray-400 mt-2">
+                  Subí una foto por opción para que, al elegirla, la ficha del
+                  producto muestre esa foto en vez de la genérica.
+                </p>
+              )}
               <button
                 type="button"
                 onClick={() => addChoice(group)}
@@ -272,5 +286,53 @@ export default function CustomizationBuilder({
         <Plus size={14} /> Agregar grupo de personalización
       </button>
     </div>
+  );
+}
+
+function ChoiceImagePicker({
+  image,
+  onChange,
+}: {
+  image?: string;
+  onChange: (image: string | undefined) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) onChange(data.url);
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <label
+      className="relative w-9 h-9 shrink-0 border border-dashed border-gray-300 rounded overflow-hidden cursor-pointer flex items-center justify-center text-gray-400 hover:border-gray-400"
+      title="Foto de esta opción"
+    >
+      {image ? (
+        <ProductImage image={image} alt="Foto de la opción" className="w-full h-full" />
+      ) : uploading ? (
+        <span className="text-[9px]">...</span>
+      ) : (
+        <ImagePlus size={14} />
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={(e) => handleFile(e.target.files?.[0])}
+      />
+    </label>
   );
 }

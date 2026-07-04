@@ -17,6 +17,7 @@ export default function ProductDetail({
   related: Product[];
 }) {
   const [activeImage, setActiveImage] = useState(0);
+  const [variantImage, setVariantImage] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [expanded, setExpanded] = useState(false);
 
@@ -24,18 +25,23 @@ export default function ProductDetail({
   const hasProduct = useCartStore((s) => s.hasProduct(product.id));
   const isCustomizable = !!product.customization?.length;
 
+  function selectThumbnail(index: number) {
+    setActiveImage(index);
+    setVariantImage(null);
+  }
+
   return (
     <>
       <section className="max-w-8xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="flex gap-4">
           <div className="flex flex-col gap-2">
             {product.images.map((img, i) => (
-              <button key={img} onClick={() => setActiveImage(i)}>
+              <button key={img} onClick={() => selectThumbnail(i)}>
                 <ProductImage
                   image={img}
                   alt={product.name}
                   className={`w-16 h-16 border ${
-                    activeImage === i
+                    !variantImage && activeImage === i
                       ? "border-morelia-text"
                       : "border-transparent"
                   }`}
@@ -45,7 +51,7 @@ export default function ProductDetail({
           </div>
           <div className="relative flex-1">
             <ProductImage
-              image={product.images[activeImage]}
+              image={variantImage || product.images[activeImage]}
               alt={product.name}
               className="aspect-square w-full"
             />
@@ -84,7 +90,7 @@ export default function ProductDetail({
           )}
 
           {isCustomizable ? (
-            <CustomizationForm product={product} />
+            <CustomizationForm product={product} onVariantImageChange={setVariantImage} />
           ) : (
             <>
               <div className="flex items-center gap-4 mb-2 mt-4">

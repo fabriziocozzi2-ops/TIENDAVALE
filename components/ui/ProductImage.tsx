@@ -31,6 +31,10 @@ function keyToCategory(key: string): CategorySlug {
   return "bolsos";
 }
 
+function isRealImage(image: string): boolean {
+  return image.startsWith("http://") || image.startsWith("https://") || image.startsWith("/");
+}
+
 export default function ProductImage({
   image,
   alt,
@@ -40,6 +44,15 @@ export default function ProductImage({
   alt: string;
   className?: string;
 }) {
+  if (isRealImage(image)) {
+    return (
+      <div className={`relative bg-morelia-card overflow-hidden ${className}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={image} alt={alt} className="absolute inset-0 w-full h-full object-cover" />
+      </div>
+    );
+  }
+
   const category = keyToCategory(image);
   const Icon = ICONS[category];
   return (

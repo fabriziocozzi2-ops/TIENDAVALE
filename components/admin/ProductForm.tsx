@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Product } from "@/lib/types";
 import { categories } from "@/lib/data/categories";
 import CustomizationBuilder from "@/components/admin/CustomizationBuilder";
+import ImageUploader from "@/components/admin/ImageUploader";
 
 const emptyProduct: Omit<Product, "id"> = {
   name: "",
@@ -87,6 +88,11 @@ export default function ProductForm({
           rows={4}
           className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
         />
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5">
+        <h2 className="text-sm font-medium mb-4">Fotos del producto</h2>
+        <ImageUploader images={form.images} onChange={(images) => update("images", images)} />
       </section>
 
       <section className="bg-white border border-gray-200 rounded p-5">

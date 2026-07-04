@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Minus, Plus, Check } from "lucide-react";
 import { CustomizationGroup, Product, SelectedCustomization } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
@@ -20,7 +20,13 @@ function initialSelections(groups: CustomizationGroup[]): Selections {
   return initial;
 }
 
-export default function CustomizationForm({ product }: { product: Product }) {
+export default function CustomizationForm({
+  product,
+  onVariantImageChange,
+}: {
+  product: Product;
+  onVariantImageChange?: (image: string | null) => void;
+}) {
   const groups = useMemo(() => product.customization ?? [], [product.customization]);
   const [selections, setSelections] = useState<Selections>(() => initialSelections(groups));
   const [showErrors, setShowErrors] = useState(false);
@@ -29,10 +35,11 @@ export default function CustomizationForm({ product }: { product: Product }) {
   const addCustomizedItem = useCartStore((s) => s.addCustomizedItem);
   const openDrawer = useCartStore((s) => s.openDrawer);
 
-  const { total, summary, missingRequired } = useMemo(() => {
+  const { total, summary, missingRequired, variantImage } = useMemo(() => {
     let total = product.price;
     const summary: SelectedCustomization[] = [];
     const missingRequired: string[] = [];
+    let variantImage: string | null = null;
 
     for (const group of groups) {
       const val = selections[group.id];
@@ -41,6 +48,7 @@ export default function CustomizationForm({ product }: { product: Product }) {
         const choice = group.choices?.find((c) => c.id === val);
         if (choice) {
           total += choice.priceDelta;
+          if (choice.image) variantImage = choice.image;
           summary.push({
             groupId: group.id,
             groupLabel: group.label,
@@ -92,8 +100,12 @@ export default function CustomizationForm({ product }: { product: Product }) {
       }
     }
 
-    return { total, summary, missingRequired };
+    return { total, summary, missingRequired, variantImage };
   }, [groups, selections, product.price]);
+
+  useEffect(() => {
+    onVariantImageChange?.(variantImage);
+  }, [variantImage, onVariantImageChange]);
 
   function setValue(groupId: string, value: SelectionValue) {
     setSelections((s) => ({ ...s, [groupId]: value }));
