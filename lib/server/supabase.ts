@@ -44,6 +44,12 @@ export function getSupabase() {
 
   client = createClient<Database>(url, key, {
     auth: { persistSession: false },
+    global: {
+      // Next.js patches the global fetch and caches responses by default.
+      // Force every Supabase request to bypass that cache so reads always
+      // reflect the latest writes instead of a stale first-render snapshot.
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
   });
   return client;
 }
