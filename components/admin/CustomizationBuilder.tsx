@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, ImagePlus } from "lucide-react";
 import { CustomizationChoice, CustomizationGroup, CustomizationGroupType } from "@/lib/types";
 import ProductImage from "@/components/ui/ProductImage";
@@ -36,9 +36,13 @@ function emptyGroup(): CustomizationGroup {
 export default function CustomizationBuilder({
   groups,
   onChange,
+  productImages,
+  onAddProductImage,
 }: {
   groups: CustomizationGroup[];
   onChange: (groups: CustomizationGroup[]) => void;
+  productImages: string[];
+  onAddProductImage: (url: string) => void;
 }) {
   function updateGroup(id: string, patch: Partial<CustomizationGroup>) {
     onChange(groups.map((g) => (g.id === id ? { ...g, ...patch } : g)));
@@ -166,10 +170,12 @@ export default function CustomizationBuilder({
               <div className="space-y-2">
                 {group.choices?.map((choice) => (
                   <div key={choice.id} className="flex flex-wrap items-center gap-2">
-                    {(group.type === "choice" || group.type === "swatch") && (
+                    {(group.type === "choice" || group.type === "swatch" || group.type === "multi-choice") && (
                       <ChoiceImagePicker
                         image={choice.image}
+                        productImages={productImages}
                         onChange={(image) => updateChoice(group, choice.id, { image })}
+                        onAddProductImage={onAddProductImage}
                       />
                     )}
                     <input
@@ -213,6 +219,13 @@ export default function CustomizationBuilder({
                 <p className="text-xs text-gray-400 mt-2">
                   Subí una foto por opción para que, al elegirla, la ficha del
                   producto muestre esa foto en vez de la genérica.
+                </p>
+              )}
+              {group.type === "multi-choice" && (
+                <p className="text-xs text-gray-400 mt-2">
+                  Subí una foto por opción (ej. cada charm) para que, al
+                  elegirla, se superponga sobre la foto principal del
+                  producto.
                 </p>
               )}
               <button
@@ -291,13 +304,30 @@ export default function CustomizationBuilder({
 
 function ChoiceImagePicker({
   image,
+  productImages,
   onChange,
+  onAddProductImage,
 }: {
   image?: string;
+  productImages: string[];
   onChange: (image: string | undefined) => void;
+  onAddProductImage: (url: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
@@ -307,7 +337,11 @@ function ChoiceImagePicker({
       formData.append("file", file);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json();
-      if (res.ok) onChange(data.url);
+      if (res.ok) {
+        onChange(data.url);
+        onAddProductImage(data.url);
+        setOpen(false);
+      }
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -315,24 +349,72 @@ function ChoiceImagePicker({
   }
 
   return (
-    <label
-      className="relative w-9 h-9 shrink-0 border border-dashed border-gray-300 rounded overflow-hidden cursor-pointer flex items-center justify-center text-gray-400 hover:border-gray-400"
-      title="Foto de esta opción"
-    >
-      {image ? (
-        <ProductImage image={image} alt="Foto de la opción" className="w-full h-full" />
-      ) : uploading ? (
-        <span className="text-[9px]">...</span>
-      ) : (
-        <ImagePlus size={14} />
+    <div ref={containerRef} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="relative w-9 h-9 border border-dashed border-gray-300 rounded overflow-hidden flex items-center justify-center text-gray-400 hover:border-gray-400"
+        title="Foto de esta opción"
+      >
+        {image ? (
+          <ProductImage image={image} alt="Foto de la opción" className="w-full h-full" />
+        ) : uploading ? (
+          <span className="text-[9px]">...</span>
+        ) : (
+          <ImagePlus size={14} />
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute z-20 top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded shadow-lg p-2">
+          {productImages.length > 0 && (
+            <>
+              <p className="text-[10px] text-gray-400 mb-1">
+                Elegir de las fotos ya subidas
+              </p>
+              <div className="grid grid-cols-5 gap-1 mb-2">
+                {productImages.map((url) => (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => {
+                      onChange(url);
+                      setOpen(false);
+                    }}
+                    className={`w-8 h-8 border rounded overflow-hidden ${
+                      image === url ? "border-[#0070F3]" : "border-gray-200"
+                    }`}
+                  >
+                    <ProductImage image={url} alt="" className="w-full h-full" />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <label className="flex items-center justify-center gap-1 text-xs text-[#0070F3] border border-dashed border-gray-300 rounded py-1.5 cursor-pointer hover:border-gray-400">
+            <ImagePlus size={12} /> Subir nueva foto
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0])}
+            />
+          </label>
+          {image && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange(undefined);
+                setOpen(false);
+              }}
+              className="w-full text-center text-[10px] text-red-600 mt-1.5"
+            >
+              Quitar foto
+            </button>
+          )}
+        </div>
       )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        className="hidden"
-        onChange={(e) => handleFile(e.target.files?.[0])}
-      />
-    </label>
+    </div>
   );
 }

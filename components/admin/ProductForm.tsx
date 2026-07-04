@@ -205,6 +205,8 @@ export default function ProductForm({
         <CustomizationBuilder
           groups={form.customization || []}
           onChange={(groups) => update("customization", groups)}
+          productImages={form.images}
+          onAddProductImage={(url) => update("images", [...form.images, url])}
         />
       </section>
 

@@ -23,9 +23,11 @@ function initialSelections(groups: CustomizationGroup[]): Selections {
 export default function CustomizationForm({
   product,
   onVariantImageChange,
+  onOverlayImagesChange,
 }: {
   product: Product;
   onVariantImageChange?: (image: string | null) => void;
+  onOverlayImagesChange?: (images: string[]) => void;
 }) {
   const groups = useMemo(() => product.customization ?? [], [product.customization]);
   const [selections, setSelections] = useState<Selections>(() => initialSelections(groups));
@@ -35,11 +37,12 @@ export default function CustomizationForm({
   const addCustomizedItem = useCartStore((s) => s.addCustomizedItem);
   const openDrawer = useCartStore((s) => s.openDrawer);
 
-  const { total, summary, missingRequired, variantImage } = useMemo(() => {
+  const { total, summary, missingRequired, variantImage, overlayImages } = useMemo(() => {
     let total = product.price;
     const summary: SelectedCustomization[] = [];
     const missingRequired: string[] = [];
     let variantImage: string | null = null;
+    const overlayImages: string[] = [];
 
     for (const group of groups) {
       const val = selections[group.id];
@@ -63,6 +66,9 @@ export default function CustomizationForm({
         const chosen = group.choices?.filter((c) => ids.includes(c.id)) || [];
         const delta = chosen.reduce((sum, c) => sum + c.priceDelta, 0);
         total += delta;
+        for (const c of chosen) {
+          if (c.image) overlayImages.push(c.image);
+        }
         if (chosen.length) {
           summary.push({
             groupId: group.id,
@@ -100,12 +106,16 @@ export default function CustomizationForm({
       }
     }
 
-    return { total, summary, missingRequired, variantImage };
+    return { total, summary, missingRequired, variantImage, overlayImages };
   }, [groups, selections, product.price]);
 
   useEffect(() => {
     onVariantImageChange?.(variantImage);
   }, [variantImage, onVariantImageChange]);
+
+  useEffect(() => {
+    onOverlayImagesChange?.(overlayImages);
+  }, [overlayImages, onOverlayImagesChange]);
 
   function setValue(groupId: string, value: SelectionValue) {
     setSelections((s) => ({ ...s, [groupId]: value }));

@@ -18,6 +18,7 @@ export default function ProductDetail({
 }) {
   const [activeImage, setActiveImage] = useState(0);
   const [variantImage, setVariantImage] = useState<string | null>(null);
+  const [overlayImages, setOverlayImages] = useState<string[]>([]);
   const [qty, setQty] = useState(1);
   const [expanded, setExpanded] = useState(false);
 
@@ -67,6 +68,18 @@ export default function ProductDetail({
                 </span>
               )}
             </div>
+            {overlayImages.length > 0 && (
+              <div className="absolute bottom-3 right-3 flex flex-wrap-reverse gap-1.5 justify-end max-w-[75%]">
+                {overlayImages.map((img, i) => (
+                  <div
+                    key={`${img}-${i}`}
+                    className="w-10 h-10 rounded-full ring-2 ring-white shadow-md overflow-hidden bg-white shrink-0"
+                  >
+                    <ProductImage image={img} alt="" className="w-full h-full" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -90,7 +103,11 @@ export default function ProductDetail({
           )}
 
           {isCustomizable ? (
-            <CustomizationForm product={product} onVariantImageChange={setVariantImage} />
+            <CustomizationForm
+              product={product}
+              onVariantImageChange={setVariantImage}
+              onOverlayImagesChange={setOverlayImages}
+            />
           ) : (
             <>
               <div className="flex items-center gap-4 mb-2 mt-4">
