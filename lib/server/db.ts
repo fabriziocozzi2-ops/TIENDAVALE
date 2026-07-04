@@ -1,8 +1,6 @@
-import { promises as fs, constants as fsConstants } from "fs";
-import os from "os";
-import path from "path";
 import { Coupon, Order, Product } from "@/lib/types";
 import { products as seedProducts } from "@/lib/data/products";
+import { getSupabase } from "@/lib/server/supabase";
 
 export interface ThemeSettings {
   colors: {
@@ -48,52 +46,104 @@ const defaultTheme: ThemeSettings = {
   },
 };
 
-// Serverless platforms (e.g. Vercel) ship a read-only filesystem except
-// for os.tmpdir(). Resolve to a writable location so reads/writes don't
-// throw EROFS in production; falls back to the project's /data folder
-// for local dev and traditional Node servers.
-let resolvedDbPath: string | null = null;
-
-async function resolveDbPath(): Promise<string> {
-  if (resolvedDbPath) return resolvedDbPath;
-
-  const primary = path.join(process.cwd(), "data", "db.json");
-  try {
-    await fs.mkdir(path.dirname(primary), { recursive: true });
-    await fs.access(path.dirname(primary), fsConstants.W_OK);
-    resolvedDbPath = primary;
-  } catch {
-    resolvedDbPath = path.join(os.tmpdir(), "morelia-db.json");
-  }
-  return resolvedDbPath;
-}
-
-async function ensureDB(dbPath: string): Promise<void> {
-  try {
-    await fs.access(dbPath);
-  } catch {
-    const initial: DB = {
-      products: seedProducts,
-      orders: [],
-      coupons: [],
-      theme: defaultTheme,
-      orderSeq: 1000,
-    };
-    await fs.mkdir(path.dirname(dbPath), { recursive: true });
-    await fs.writeFile(dbPath, JSON.stringify(initial, null, 2));
-  }
-}
-
 export async function readDB(): Promise<DB> {
-  const dbPath = await resolveDbPath();
-  await ensureDB(dbPath);
-  const raw = await fs.readFile(dbPath, "utf-8");
-  const db = JSON.parse(raw) as DB;
-  if (!db.coupons) db.coupons = [];
-  return db;
+  const supabase = getSupabase();
+
+  const [productsRes, ordersRes, couponsRes, stateRes] = await Promise.all([
+    supabase.from("products").select("id, data"),
+    supabase.from("orders").select("id, data").order("created_at", { ascending: false }),
+    supabase.from("coupons").select("id, data"),
+    supabase.from("app_state").select("key, value").in("key", ["theme", "order_seq"]),
+  ]);
+
+  if (productsRes.error) throw productsRes.error;
+  if (ordersRes.error) throw ordersRes.error;
+  if (couponsRes.error) throw couponsRes.error;
+  if (stateRes.error) throw stateRes.error;
+
+  let products = (productsRes.data ?? []).map((row) => row.data);
+  if (products.length === 0) {
+    await supabase
+      .from("products")
+      .upsert(seedProducts.map((p) => ({ id: p.id, data: p })));
+    products = seedProducts;
+  }
+
+  const orders = (ordersRes.data ?? []).map((row) => row.data);
+  const coupons = (couponsRes.data ?? []).map((row) => row.data);
+
+  const stateMap = new Map((stateRes.data ?? []).map((row) => [row.key, row.value]));
+
+  let theme = stateMap.get("theme") as ThemeSettings | undefined;
+  if (!theme) {
+    await supabase.from("app_state").upsert({ key: "theme", value: defaultTheme });
+    theme = defaultTheme;
+  }
+
+  let orderSeq = stateMap.get("order_seq") as number | undefined;
+  if (orderSeq === undefined) {
+    await supabase.from("app_state").upsert({ key: "order_seq", value: 1000 });
+    orderSeq = 1000;
+  }
+
+  return { products, orders, coupons, theme, orderSeq };
 }
 
 export async function writeDB(db: DB): Promise<void> {
-  const dbPath = await resolveDbPath();
-  await fs.writeFile(dbPath, JSON.stringify(db, null, 2));
+  const supabase = getSupabase();
+
+  async function syncProducts() {
+    const rows = db.products.map((p) => ({ id: p.id, data: p }));
+    const { data: existing, error } = await supabase.from("products").select("id");
+    if (error) throw error;
+    const currentIds = new Set(rows.map((r) => r.id));
+    const idsToDelete = (existing ?? []).map((r) => r.id).filter((id) => !currentIds.has(id));
+    if (idsToDelete.length > 0) {
+      const { error: deleteError } = await supabase.from("products").delete().in("id", idsToDelete);
+      if (deleteError) throw deleteError;
+    }
+    if (rows.length > 0) {
+      const { error: upsertError } = await supabase.from("products").upsert(rows);
+      if (upsertError) throw upsertError;
+    }
+  }
+
+  async function syncOrders() {
+    const rows = db.orders.map((o) => ({ id: o.id, data: o }));
+    const { data: existing, error } = await supabase.from("orders").select("id");
+    if (error) throw error;
+    const currentIds = new Set(rows.map((r) => r.id));
+    const idsToDelete = (existing ?? []).map((r) => r.id).filter((id) => !currentIds.has(id));
+    if (idsToDelete.length > 0) {
+      const { error: deleteError } = await supabase.from("orders").delete().in("id", idsToDelete);
+      if (deleteError) throw deleteError;
+    }
+    if (rows.length > 0) {
+      const { error: upsertError } = await supabase.from("orders").upsert(rows);
+      if (upsertError) throw upsertError;
+    }
+  }
+
+  async function syncCoupons() {
+    const rows = db.coupons.map((c) => ({ id: c.id, data: c }));
+    const { data: existing, error } = await supabase.from("coupons").select("id");
+    if (error) throw error;
+    const currentIds = new Set(rows.map((r) => r.id));
+    const idsToDelete = (existing ?? []).map((r) => r.id).filter((id) => !currentIds.has(id));
+    if (idsToDelete.length > 0) {
+      const { error: deleteError } = await supabase.from("coupons").delete().in("id", idsToDelete);
+      if (deleteError) throw deleteError;
+    }
+    if (rows.length > 0) {
+      const { error: upsertError } = await supabase.from("coupons").upsert(rows);
+      if (upsertError) throw upsertError;
+    }
+  }
+
+  await Promise.all([syncProducts(), syncOrders(), syncCoupons()]);
+
+  await Promise.all([
+    supabase.from("app_state").upsert({ key: "theme", value: db.theme }),
+    supabase.from("app_state").upsert({ key: "order_seq", value: db.orderSeq }),
+  ]);
 }
