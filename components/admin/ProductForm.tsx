@@ -98,7 +98,7 @@ export default function ProductForm({
 
       <section className="bg-white border border-gray-200 rounded p-5">
         <h2 className="text-sm font-medium mb-4">Precio</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs text-gray-500 mb-1">Precio</label>
             <input
@@ -136,7 +136,7 @@ export default function ProductForm({
 
       <section className="bg-white border border-gray-200 rounded p-5">
         <h2 className="text-sm font-medium mb-4">Stock e identificadores</h2>
-        <div className="flex items-center gap-4 mb-4 text-sm">
+        <div className="flex flex-wrap items-center gap-4 mb-4 text-sm">
           <label className="flex items-center gap-2">
             <input
               type="radio"

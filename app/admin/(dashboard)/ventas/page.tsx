@@ -23,40 +23,42 @@ export default async function AdminVentasPage() {
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium">Fecha</th>
-                <th className="text-left px-4 py-3 font-medium">N° Pedido</th>
-                <th className="text-left px-4 py-3 font-medium">Cliente</th>
-                <th className="text-left px-4 py-3 font-medium">Estado</th>
-                <th className="text-left px-4 py-3 font-medium">Pago</th>
-                <th className="text-right px-4 py-3 font-medium">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {orders.map((o) => (
-                <tr key={o.id}>
-                  <td className="px-4 py-3 text-gray-500">
-                    {new Date(o.date).toLocaleDateString("es-AR")}
-                  </td>
-                  <td className="px-4 py-3">#{o.number}</td>
-                  <td className="px-4 py-3">{o.customerEmail}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-block px-2 py-0.5 rounded text-xs bg-green-100 text-green-700 capitalize">
-                      {o.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 capitalize">
-                    {o.paymentMethod}
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium">
-                    {formatPrice(o.total)}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">Fecha</th>
+                  <th className="text-left px-4 py-3 font-medium">N° Pedido</th>
+                  <th className="text-left px-4 py-3 font-medium">Cliente</th>
+                  <th className="text-left px-4 py-3 font-medium">Estado</th>
+                  <th className="text-left px-4 py-3 font-medium">Pago</th>
+                  <th className="text-right px-4 py-3 font-medium">Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {orders.map((o) => (
+                  <tr key={o.id}>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                      {new Date(o.date).toLocaleDateString("es-AR")}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">#{o.number}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{o.customerEmail}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-block px-2 py-0.5 rounded text-xs bg-green-100 text-green-700 capitalize whitespace-nowrap">
+                        {o.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 capitalize whitespace-nowrap">
+                      {o.paymentMethod}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium whitespace-nowrap">
+                      {formatPrice(o.total)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

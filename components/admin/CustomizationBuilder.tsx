@@ -85,7 +85,7 @@ export default function CustomizationBuilder({
       {groups.map((group) => (
         <div key={group.id} className="border border-gray-200 rounded p-4 space-y-3">
           <div className="flex items-start gap-3">
-            <div className="flex-1 grid grid-cols-2 gap-3">
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
                   Nombre del grupo (ej. Color, Charms)
@@ -114,7 +114,7 @@ export default function CustomizationBuilder({
             <button
               type="button"
               onClick={() => removeGroup(group.id)}
-              className="text-red-600 mt-6"
+              className="text-red-600 mt-5 shrink-0"
               aria-label="Eliminar grupo"
             >
               <Trash2 size={16} />
@@ -165,7 +165,7 @@ export default function CustomizationBuilder({
               </div>
               <div className="space-y-2">
                 {group.choices?.map((choice) => (
-                  <div key={choice.id} className="flex items-center gap-2">
+                  <div key={choice.id} className="flex flex-wrap items-center gap-2">
                     {(group.type === "choice" || group.type === "swatch") && (
                       <ChoiceImagePicker
                         image={choice.image}
@@ -226,7 +226,7 @@ export default function CustomizationBuilder({
           )}
 
           {group.type === "quantity" && (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Unidades incluidas</label>
                 <input

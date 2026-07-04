@@ -130,7 +130,7 @@ export default function AdminDisenoPage() {
 
       <section className="bg-white border border-gray-200 rounded p-5 mb-6">
         <h2 className="text-sm font-medium mb-4">Colores de tu marca</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <ColorField
             label="Color de fondo"
             value={theme.colors.background}

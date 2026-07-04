@@ -43,11 +43,11 @@ export default function AdminDescuentosPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="font-serif text-2xl">Cupones</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="bg-[#0070F3] text-white text-sm px-4 py-2 rounded"
+          className="bg-[#0070F3] text-white text-sm px-4 py-2 rounded whitespace-nowrap"
         >
           + Crear cupón
         </button>
@@ -68,7 +68,7 @@ export default function AdminDescuentosPage() {
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm uppercase"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Tipo</label>
               <select
@@ -113,39 +113,41 @@ export default function AdminDescuentosPage() {
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium">Código</th>
-                <th className="text-left px-4 py-3 font-medium">Tipo</th>
-                <th className="text-left px-4 py-3 font-medium">Valor</th>
-                <th className="text-left px-4 py-3 font-medium">Usos</th>
-                <th className="text-right px-4 py-3 font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {coupons.map((c) => (
-                <tr key={c.id}>
-                  <td className="px-4 py-3 font-medium">{c.code}</td>
-                  <td className="px-4 py-3 text-gray-500">{typeLabels[c.type]}</td>
-                  <td className="px-4 py-3">
-                    {c.type === "percentage" && `${c.value}%`}
-                    {c.type === "fixed" && `$${c.value}`}
-                    {c.type === "free-shipping" && "—"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{c.uses}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleDelete(c.id)}
-                      className="text-xs text-red-600"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
+              <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">Código</th>
+                  <th className="text-left px-4 py-3 font-medium">Tipo</th>
+                  <th className="text-left px-4 py-3 font-medium">Valor</th>
+                  <th className="text-left px-4 py-3 font-medium">Usos</th>
+                  <th className="text-right px-4 py-3 font-medium">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {coupons.map((c) => (
+                  <tr key={c.id}>
+                    <td className="px-4 py-3 font-medium whitespace-nowrap">{c.code}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{typeLabels[c.type]}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {c.type === "percentage" && `${c.value}%`}
+                      {c.type === "fixed" && `$${c.value}`}
+                      {c.type === "free-shipping" && "—"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{c.uses}</td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="text-xs text-red-600"
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

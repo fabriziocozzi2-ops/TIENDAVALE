@@ -46,30 +46,32 @@ export default async function AdminClientesPage() {
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium">Nombre</th>
-                <th className="text-left px-4 py-3 font-medium">Email</th>
-                <th className="text-left px-4 py-3 font-medium">Compras</th>
-                <th className="text-left px-4 py-3 font-medium">Total gastado</th>
-                <th className="text-left px-4 py-3 font-medium">Última compra</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {customers.map((c) => (
-                <tr key={c.email}>
-                  <td className="px-4 py-3">{c.name || "—"}</td>
-                  <td className="px-4 py-3">{c.email}</td>
-                  <td className="px-4 py-3">{c.purchases}</td>
-                  <td className="px-4 py-3">{formatPrice(c.total)}</td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {new Date(c.lastDate).toLocaleDateString("es-AR")}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">Nombre</th>
+                  <th className="text-left px-4 py-3 font-medium">Email</th>
+                  <th className="text-left px-4 py-3 font-medium">Compras</th>
+                  <th className="text-left px-4 py-3 font-medium">Total gastado</th>
+                  <th className="text-left px-4 py-3 font-medium">Última compra</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {customers.map((c) => (
+                  <tr key={c.email}>
+                    <td className="px-4 py-3 whitespace-nowrap">{c.name || "—"}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{c.email}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{c.purchases}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{formatPrice(c.total)}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                      {new Date(c.lastDate).toLocaleDateString("es-AR")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
