@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, ImagePlus } from "lucide-react";
 import { CustomizationChoice, CustomizationGroup, CustomizationGroupType } from "@/lib/types";
 import ProductImage from "@/components/ui/ProductImage";
+import ImageCropModal from "@/components/admin/ImageCropModal";
 
 const typeLabels: Record<CustomizationGroupType, string> = {
   choice: "Selección única (imagen)",
@@ -317,6 +318,7 @@ function ChoiceImagePicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -329,23 +331,37 @@ function ChoiceImagePicker({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  async function handleFile(file: File | undefined) {
+  function handleFile(file: File | undefined) {
     if (!file) return;
+    setPendingFile(file);
+    setOpen(false);
+  }
+
+  async function handleCropConfirm(blob: Blob) {
+    if (!pendingFile) return;
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append(
+        "file",
+        new File([blob], pendingFile.name.replace(/\.[^.]+$/, "") + ".png", { type: "image/png" })
+      );
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (res.ok) {
         onChange(data.url);
         onAddProductImage(data.url);
-        setOpen(false);
       }
     } finally {
       setUploading(false);
+      setPendingFile(null);
       if (inputRef.current) inputRef.current.value = "";
     }
+  }
+
+  function handleCropCancel() {
+    setPendingFile(null);
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   return (
@@ -414,6 +430,10 @@ function ChoiceImagePicker({
             </button>
           )}
         </div>
+      )}
+
+      {pendingFile && (
+        <ImageCropModal file={pendingFile} onCancel={handleCropCancel} onConfirm={handleCropConfirm} />
       )}
     </div>
   );

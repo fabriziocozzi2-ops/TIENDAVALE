@@ -1,13 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { Product } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 import { useCartStore } from "@/lib/store/cartStore";
 import ProductImage from "@/components/ui/ProductImage";
 import ProductCard from "@/components/ui/ProductCard";
-import CustomizationForm from "@/components/ui/CustomizationForm";
+import CustomizationForm, { OverlayCharm } from "@/components/ui/CustomizationForm";
+
+function DraggableCharm({
+  image,
+  x,
+  y,
+  containerRef,
+  onMove,
+}: {
+  image: string;
+  x: number;
+  y: number;
+  containerRef: React.RefObject<HTMLDivElement>;
+  onMove: (x: number, y: number) => void;
+}) {
+  const draggingRef = useRef(false);
+
+  function handlePointerDown(e: React.PointerEvent) {
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    draggingRef.current = true;
+  }
+
+  function handlePointerMove(e: React.PointerEvent) {
+    if (!draggingRef.current || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const relX = ((e.clientX - rect.left) / rect.width) * 100;
+    const relY = ((e.clientY - rect.top) / rect.height) * 100;
+    onMove(Math.min(94, Math.max(0, relX)), Math.min(94, Math.max(0, relY)));
+  }
+
+  function handlePointerUp() {
+    draggingRef.current = false;
+  }
+
+  return (
+    <div
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      className="absolute w-12 h-12 cursor-grab active:cursor-grabbing touch-none select-none drop-shadow-md"
+      style={{ left: `${x}%`, top: `${y}%` }}
+      title="Arrastrá para mover"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={image} alt="" draggable={false} className="w-full h-full object-contain pointer-events-none" />
+    </div>
+  );
+}
 
 export default function ProductDetail({
   product,
@@ -18,9 +67,24 @@ export default function ProductDetail({
 }) {
   const [activeImage, setActiveImage] = useState(0);
   const [variantImage, setVariantImage] = useState<string | null>(null);
-  const [overlayImages, setOverlayImages] = useState<string[]>([]);
+  const [overlayCharms, setOverlayCharms] = useState<OverlayCharm[]>([]);
+  const [charmPositions, setCharmPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [qty, setQty] = useState(1);
   const [expanded, setExpanded] = useState(false);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setCharmPositions((prev) => {
+      const next: Record<string, { x: number; y: number }> = {};
+      overlayCharms.forEach((charm, i) => {
+        next[charm.id] = prev[charm.id] ?? {
+          x: 50 + ((i % 3) - 1) * 14,
+          y: 55 + Math.floor(i / 3) * 16,
+        };
+      });
+      return next;
+    });
+  }, [overlayCharms]);
 
   const addItem = useCartStore((s) => s.addItem);
   const hasProduct = useCartStore((s) => s.hasProduct(product.id));
@@ -50,7 +114,7 @@ export default function ProductDetail({
               </button>
             ))}
           </div>
-          <div className="relative flex-1">
+          <div ref={imageContainerRef} className="relative flex-1">
             <ProductImage
               image={variantImage || product.images[activeImage]}
               alt={product.name}
@@ -68,18 +132,21 @@ export default function ProductDetail({
                 </span>
               )}
             </div>
-            {overlayImages.length > 0 && (
-              <div className="absolute bottom-3 right-3 flex flex-wrap-reverse gap-1.5 justify-end max-w-[75%]">
-                {overlayImages.map((img, i) => (
-                  <div
-                    key={`${img}-${i}`}
-                    className="w-10 h-10 rounded-full ring-2 ring-white shadow-md overflow-hidden bg-white shrink-0"
-                  >
-                    <ProductImage image={img} alt="" className="w-full h-full" />
-                  </div>
-                ))}
-              </div>
-            )}
+            {overlayCharms.map((charm) => {
+              const pos = charmPositions[charm.id] ?? { x: 50, y: 60 };
+              return (
+                <DraggableCharm
+                  key={charm.id}
+                  image={charm.image}
+                  x={pos.x}
+                  y={pos.y}
+                  containerRef={imageContainerRef}
+                  onMove={(x, y) =>
+                    setCharmPositions((p) => ({ ...p, [charm.id]: { x, y } }))
+                  }
+                />
+              );
+            })}
           </div>
         </div>
 
@@ -106,7 +173,7 @@ export default function ProductDetail({
             <CustomizationForm
               product={product}
               onVariantImageChange={setVariantImage}
-              onOverlayImagesChange={setOverlayImages}
+              onOverlayCharmsChange={setOverlayCharms}
             />
           ) : (
             <>

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { X, ArrowLeft, ArrowRight, Upload } from "lucide-react";
 import ProductImage from "@/components/ui/ProductImage";
+import ImageCropModal from "@/components/admin/ImageCropModal";
 
 export default function ImageUploader({
   images,
@@ -12,33 +13,36 @@ export default function ImageUploader({
   onChange: (images: string[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [queue, setQueue] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleFiles(files: FileList | null) {
+  function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
+    setQueue((q) => [...q, ...Array.from(files)]);
+  }
+
+  async function handleCropConfirm(blob: Blob) {
+    const file = queue[0];
     setUploading(true);
     setError("");
     try {
-      const uploaded: string[] = [];
-      for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await fetch("/api/admin/upload", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Error al subir la imagen");
-        uploaded.push(data.url);
-      }
-      onChange([...images, ...uploaded]);
+      const formData = new FormData();
+      formData.append("file", new File([blob], file.name.replace(/\.[^.]+$/, "") + ".png", { type: "image/png" }));
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al subir la imagen");
+      onChange([...images, data.url]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al subir la imagen");
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
+      setQueue((q) => q.slice(1));
     }
+  }
+
+  function handleCropCancel() {
+    setQueue((q) => q.slice(1));
   }
 
   function removeImage(index: number) {
@@ -103,11 +107,18 @@ export default function ImageUploader({
           multiple
           className="hidden"
           disabled={uploading}
-          onChange={(e) => handleFiles(e.target.files)}
+          onChange={(e) => {
+            handleFiles(e.target.files);
+            e.target.value = "";
+          }}
         />
       </label>
       {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
       <p className="text-xs text-gray-400 mt-2">JPG, PNG, WEBP o GIF. Máximo 5MB por foto.</p>
+
+      {queue[0] && (
+        <ImageCropModal file={queue[0]} onCancel={handleCropCancel} onConfirm={handleCropConfirm} />
+      )}
     </div>
   );
 }

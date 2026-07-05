@@ -9,6 +9,7 @@ import ProductImage from "@/components/ui/ProductImage";
 
 type SelectionValue = string | string[] | number;
 type Selections = Record<string, SelectionValue>;
+export type OverlayCharm = { id: string; image: string };
 
 function initialSelections(groups: CustomizationGroup[]): Selections {
   const initial: Selections = {};
@@ -23,11 +24,11 @@ function initialSelections(groups: CustomizationGroup[]): Selections {
 export default function CustomizationForm({
   product,
   onVariantImageChange,
-  onOverlayImagesChange,
+  onOverlayCharmsChange,
 }: {
   product: Product;
   onVariantImageChange?: (image: string | null) => void;
-  onOverlayImagesChange?: (images: string[]) => void;
+  onOverlayCharmsChange?: (charms: OverlayCharm[]) => void;
 }) {
   const groups = useMemo(() => product.customization ?? [], [product.customization]);
   const [selections, setSelections] = useState<Selections>(() => initialSelections(groups));
@@ -37,12 +38,12 @@ export default function CustomizationForm({
   const addCustomizedItem = useCartStore((s) => s.addCustomizedItem);
   const openDrawer = useCartStore((s) => s.openDrawer);
 
-  const { total, summary, missingRequired, variantImage, overlayImages } = useMemo(() => {
+  const { total, summary, missingRequired, variantImage, overlayCharms } = useMemo(() => {
     let total = product.price;
     const summary: SelectedCustomization[] = [];
     const missingRequired: string[] = [];
     let variantImage: string | null = null;
-    const overlayImages: string[] = [];
+    const overlayCharms: OverlayCharm[] = [];
 
     for (const group of groups) {
       const val = selections[group.id];
@@ -67,7 +68,7 @@ export default function CustomizationForm({
         const delta = chosen.reduce((sum, c) => sum + c.priceDelta, 0);
         total += delta;
         for (const c of chosen) {
-          if (c.image) overlayImages.push(c.image);
+          if (c.image) overlayCharms.push({ id: c.id, image: c.image });
         }
         if (chosen.length) {
           summary.push({
@@ -106,7 +107,7 @@ export default function CustomizationForm({
       }
     }
 
-    return { total, summary, missingRequired, variantImage, overlayImages };
+    return { total, summary, missingRequired, variantImage, overlayCharms };
   }, [groups, selections, product.price]);
 
   useEffect(() => {
@@ -114,8 +115,8 @@ export default function CustomizationForm({
   }, [variantImage, onVariantImageChange]);
 
   useEffect(() => {
-    onOverlayImagesChange?.(overlayImages);
-  }, [overlayImages, onOverlayImagesChange]);
+    onOverlayCharmsChange?.(overlayCharms);
+  }, [overlayCharms, onOverlayCharmsChange]);
 
   function setValue(groupId: string, value: SelectionValue) {
     setSelections((s) => ({ ...s, [groupId]: value }));
@@ -200,6 +201,12 @@ export default function CustomizationForm({
                 );
               })}
             </div>
+          )}
+
+          {group.type === "multi-choice" && group.choices?.some((c) => c.image) && (
+            <p className="text-xs text-morelia-text-soft mt-2 italic">
+              Podés arrastrar los dijes sobre la foto para acomodarlos como quieras.
+            </p>
           )}
 
           {group.type === "swatch" && (
