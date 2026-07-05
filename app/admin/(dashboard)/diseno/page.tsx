@@ -1,20 +1,34 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, ArrowDown, Eye, EyeOff, Upload, X } from "lucide-react";
-import { ThemeSettings } from "@/lib/server/db";
+import { ArrowUp, ArrowDown, Eye, EyeOff, Upload, X, Plus, Trash2 } from "lucide-react";
+import {
+  ThemeSettings,
+  HomeContent,
+  HeroSlideContent,
+  BannerContent,
+  TestimonialContent,
+  IconInfoItemContent,
+} from "@/lib/server/db";
+import ImageCropModal from "@/components/admin/ImageCropModal";
+import SingleImageField from "@/components/admin/SingleImageField";
 
 export default function AdminDisenoPage() {
   const [theme, setTheme] = useState<ThemeSettings | null>(null);
+  const [products, setProducts] = useState<{ id: number; name: string }[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/admin/theme")
       .then((res) => res.json())
       .then((data) => setTheme(data.theme));
+    fetch("/api/admin/products")
+      .then((res) => res.json())
+      .then((data) => setProducts(data.products.map((p: { id: number; name: string }) => ({ id: p.id, name: p.name }))));
   }, []);
 
   function updateColor(key: keyof ThemeSettings["colors"], value: string) {
@@ -51,12 +65,135 @@ export default function AdminDisenoPage() {
     setSaved(false);
   }
 
-  async function handleLogoUpload(file: File | undefined) {
+  function updateContent<K extends keyof HomeContent>(key: K, value: HomeContent[K]) {
+    setTheme((t) => (t ? { ...t, content: { ...t.content, [key]: value } } : t));
+    setSaved(false);
+  }
+
+  function updateSlide(index: number, patch: Partial<HeroSlideContent>) {
+    setTheme((t) => {
+      if (!t) return t;
+      const slides = t.content.slider.slides.map((s, i) => (i === index ? { ...s, ...patch } : s));
+      return { ...t, content: { ...t.content, slider: { slides } } };
+    });
+    setSaved(false);
+  }
+
+  function addSlide() {
+    setTheme((t) =>
+      t
+        ? {
+            ...t,
+            content: {
+              ...t.content,
+              slider: {
+                slides: [
+                  ...t.content.slider.slides,
+                  { title: "", subtitle: "", ctaLabel: "Comprar", ctaHref: "/" },
+                ],
+              },
+            },
+          }
+        : t
+    );
+    setSaved(false);
+  }
+
+  function removeSlide(index: number) {
+    setTheme((t) =>
+      t
+        ? {
+            ...t,
+            content: {
+              ...t.content,
+              slider: { slides: t.content.slider.slides.filter((_, i) => i !== index) },
+            },
+          }
+        : t
+    );
+    setSaved(false);
+  }
+
+  function updateBanner(index: number, patch: Partial<BannerContent>) {
+    setTheme((t) => {
+      if (!t) return t;
+      const banners = t.content.banners.map((b, i) => (i === index ? { ...b, ...patch } : b));
+      return { ...t, content: { ...t.content, banners } };
+    });
+    setSaved(false);
+  }
+
+  function addBanner() {
+    setTheme((t) =>
+      t
+        ? { ...t, content: { ...t.content, banners: [...t.content.banners, { title: "", href: "/" }] } }
+        : t
+    );
+    setSaved(false);
+  }
+
+  function removeBanner(index: number) {
+    setTheme((t) =>
+      t
+        ? { ...t, content: { ...t.content, banners: t.content.banners.filter((_, i) => i !== index) } }
+        : t
+    );
+    setSaved(false);
+  }
+
+  function updateTestimonial(index: number, patch: Partial<TestimonialContent>) {
+    setTheme((t) => {
+      if (!t) return t;
+      const testimonials = t.content.testimonials.map((x, i) => (i === index ? { ...x, ...patch } : x));
+      return { ...t, content: { ...t.content, testimonials } };
+    });
+    setSaved(false);
+  }
+
+  function addTestimonial() {
+    setTheme((t) =>
+      t
+        ? { ...t, content: { ...t.content, testimonials: [...t.content.testimonials, { text: "", name: "" }] } }
+        : t
+    );
+    setSaved(false);
+  }
+
+  function removeTestimonial(index: number) {
+    setTheme((t) =>
+      t
+        ? {
+            ...t,
+            content: { ...t.content, testimonials: t.content.testimonials.filter((_, i) => i !== index) },
+          }
+        : t
+    );
+    setSaved(false);
+  }
+
+  function updateIconInfoItem(index: number, patch: Partial<IconInfoItemContent>) {
+    setTheme((t) => {
+      if (!t) return t;
+      const iconInfo = t.content.iconInfo.map((x, i) => (i === index ? { ...x, ...patch } : x));
+      return { ...t, content: { ...t.content, iconInfo } };
+    });
+    setSaved(false);
+  }
+
+  function handleLogoFile(file: File | undefined) {
     if (!file) return;
+    setPendingLogoFile(file);
+  }
+
+  async function handleLogoCropConfirm(blob: Blob) {
+    if (!pendingLogoFile) return;
     setUploadingLogo(true);
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append(
+        "file",
+        new File([blob], pendingLogoFile.name.replace(/\.[^.]+$/, "") + ".png", { type: "image/png" })
+      );
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (res.ok) {
@@ -65,8 +202,14 @@ export default function AdminDisenoPage() {
       }
     } finally {
       setUploadingLogo(false);
+      setPendingLogoFile(null);
       if (logoInputRef.current) logoInputRef.current.value = "";
     }
+  }
+
+  function handleLogoCropCancel() {
+    setPendingLogoFile(null);
+    if (logoInputRef.current) logoInputRef.current.value = "";
   }
 
   function removeLogo() {
@@ -88,8 +231,10 @@ export default function AdminDisenoPage() {
 
   if (!theme) return <p className="text-sm text-gray-400">Cargando...</p>;
 
+  const content = theme.content;
+
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-3xl">
       <h1 className="font-serif text-2xl mb-6">Diseño</h1>
 
       <section className="bg-white border border-gray-200 rounded p-5 mb-6">
@@ -113,7 +258,10 @@ export default function AdminDisenoPage() {
                 accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
                 className="hidden"
                 disabled={uploadingLogo}
-                onChange={(e) => handleLogoUpload(e.target.files?.[0])}
+                onChange={(e) => {
+                  handleLogoFile(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
               />
             </label>
             {theme.logoUrl && (
@@ -126,6 +274,13 @@ export default function AdminDisenoPage() {
             )}
           </div>
         </div>
+        {pendingLogoFile && (
+          <ImageCropModal
+            file={pendingLogoFile}
+            onCancel={handleLogoCropCancel}
+            onConfirm={handleLogoCropConfirm}
+          />
+        )}
       </section>
 
       <section className="bg-white border border-gray-200 rounded p-5 mb-6">
@@ -199,11 +354,357 @@ export default function AdminDisenoPage() {
         </ul>
       </section>
 
-      <div className="flex items-center gap-3">
+      <h2 className="font-serif text-xl mb-4 mt-10">Contenido de cada sección</h2>
+      <p className="text-xs text-gray-400 mb-4">
+        Editá los textos y las fotos de cada bloque de tu home. El ícono y el
+        diseño de cada sección quedan fijos, pero el texto y la imagen son
+        tuyos.
+      </p>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <h3 className="text-sm font-medium mb-3">Mensaje de bienvenida</h3>
+        <textarea
+          value={content.welcome.text}
+          onChange={(e) => updateContent("welcome", { text: e.target.value })}
+          rows={2}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        />
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium">Carrusel de imágenes</h3>
+          <button
+            type="button"
+            onClick={addSlide}
+            className="flex items-center gap-1 text-xs text-[#0070F3]"
+          >
+            <Plus size={12} /> Agregar imagen
+          </button>
+        </div>
+        <div className="space-y-4">
+          {content.slider.slides.map((slide, i) => (
+            <div key={i} className="border border-gray-200 rounded p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <SingleImageField
+                  label="Foto de fondo"
+                  value={slide.image}
+                  onChange={(url) => updateSlide(i, { image: url })}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSlide(i)}
+                  className="text-red-600 ml-auto"
+                  aria-label="Eliminar imagen del carrusel"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Título</label>
+                  <input
+                    value={slide.title}
+                    onChange={(e) => updateSlide(i, { title: e.target.value })}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Subtítulo</label>
+                  <input
+                    value={slide.subtitle}
+                    onChange={(e) => updateSlide(i, { subtitle: e.target.value })}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Texto del botón</label>
+                  <input
+                    value={slide.ctaLabel}
+                    onChange={(e) => updateSlide(i, { ctaLabel: e.target.value })}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Link del botón</label>
+                  <input
+                    value={slide.ctaHref}
+                    onChange={(e) => updateSlide(i, { ctaHref: e.target.value })}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+          {content.slider.slides.length === 0 && (
+            <p className="text-xs text-gray-400">No hay imágenes en el carrusel.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <h3 className="text-sm font-medium mb-3">Productos destacados</h3>
+        <label className="block text-xs text-gray-500 mb-1">Título de la sección</label>
+        <input
+          value={content.featured.title}
+          onChange={(e) => updateContent("featured", { title: e.target.value })}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-gray-400 mt-2">
+          Los productos que se muestran acá son los que marcaste como
+          &ldquo;En inicio&rdquo; al editar cada producto.
+        </p>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <h3 className="text-sm font-medium mb-3">Mensaje institucional</h3>
+        <label className="block text-xs text-gray-500 mb-1">Texto pequeño de arriba</label>
+        <input
+          value={content.mission.eyebrow}
+          onChange={(e) => updateContent("mission", { ...content.mission, eyebrow: e.target.value })}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-3"
+        />
+        <label className="block text-xs text-gray-500 mb-1">Frase destacada</label>
+        <textarea
+          value={content.mission.quote}
+          onChange={(e) => updateContent("mission", { ...content.mission, quote: e.target.value })}
+          rows={3}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-3"
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Texto del link</label>
+            <input
+              value={content.mission.linkLabel}
+              onChange={(e) =>
+                updateContent("mission", { ...content.mission, linkLabel: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Link</label>
+            <input
+              value={content.mission.linkHref}
+              onChange={(e) =>
+                updateContent("mission", { ...content.mission, linkHref: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <h3 className="text-sm font-medium mb-3">Producto principal</h3>
+        <label className="block text-xs text-gray-500 mb-1">Elegí qué producto destacar</label>
+        <select
+          value={content.featuredDetail.productId ?? ""}
+          onChange={(e) =>
+            updateContent("featuredDetail", {
+              productId: e.target.value ? Number(e.target.value) : null,
+            })
+          }
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        >
+          <option value="">El primero de la lista (automático)</option>
+          {products?.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium">Banners promocionales</h3>
+          <button
+            type="button"
+            onClick={addBanner}
+            className="flex items-center gap-1 text-xs text-[#0070F3]"
+          >
+            <Plus size={12} /> Agregar banner
+          </button>
+        </div>
+        <div className="space-y-4">
+          {content.banners.map((banner, i) => (
+            <div key={i} className="border border-gray-200 rounded p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <SingleImageField
+                  label="Foto de fondo"
+                  value={banner.image}
+                  onChange={(url) => updateBanner(i, { image: url })}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeBanner(i)}
+                  className="text-red-600 ml-auto"
+                  aria-label="Eliminar banner"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Texto</label>
+                  <input
+                    value={banner.title}
+                    onChange={(e) => updateBanner(i, { title: e.target.value })}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Link (&ldquo;Comprar&rdquo;)</label>
+                  <input
+                    value={banner.href}
+                    onChange={(e) => updateBanner(i, { href: e.target.value })}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium">Testimonios</h3>
+          <button
+            type="button"
+            onClick={addTestimonial}
+            className="flex items-center gap-1 text-xs text-[#0070F3]"
+          >
+            <Plus size={12} /> Agregar testimonio
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mb-3">Se muestran hasta 3 en la home.</p>
+        <div className="space-y-4">
+          {content.testimonials.map((t, i) => (
+            <div key={i} className="border border-gray-200 rounded p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <SingleImageField
+                  label="Foto (opcional)"
+                  value={t.photo}
+                  onChange={(url) => updateTestimonial(i, { photo: url })}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeTestimonial(i)}
+                  className="text-red-600 ml-auto"
+                  aria-label="Eliminar testimonio"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Texto</label>
+                <textarea
+                  value={t.text}
+                  onChange={(e) => updateTestimonial(i, { text: e.target.value })}
+                  rows={2}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Nombre</label>
+                <input
+                  value={t.name}
+                  onChange={(e) => updateTestimonial(i, { name: e.target.value })}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <h3 className="text-sm font-medium mb-3">Handmade</h3>
+        <div className="flex items-start gap-3 mb-3">
+          <SingleImageField
+            label="Foto de fondo (opcional)"
+            value={content.handmade.image}
+            onChange={(url) => updateContent("handmade", { ...content.handmade, image: url })}
+          />
+        </div>
+        <label className="block text-xs text-gray-500 mb-1">Título</label>
+        <input
+          value={content.handmade.title}
+          onChange={(e) => updateContent("handmade", { ...content.handmade, title: e.target.value })}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-3"
+        />
+        <label className="block text-xs text-gray-500 mb-1">Texto</label>
+        <textarea
+          value={content.handmade.text}
+          onChange={(e) => updateContent("handmade", { ...content.handmade, text: e.target.value })}
+          rows={2}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        />
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <h3 className="text-sm font-medium mb-1">Información de envío</h3>
+        <p className="text-xs text-gray-400 mb-3">Los 3 íconos quedan fijos, pero podés cambiar los textos.</p>
+        <div className="space-y-4">
+          {content.iconInfo.map((item, i) => (
+            <div key={i} className="border border-gray-200 rounded p-4 space-y-2">
+              <label className="block text-xs text-gray-500 mb-1">Título</label>
+              <input
+                value={item.title}
+                onChange={(e) => updateIconInfoItem(i, { title: e.target.value })}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-2"
+              />
+              <label className="block text-xs text-gray-500 mb-1">Texto</label>
+              <textarea
+                value={item.text}
+                onChange={(e) => updateIconInfoItem(i, { text: e.target.value })}
+                rows={2}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-5 mb-6">
+        <h3 className="text-sm font-medium mb-3">Newsletter e Instagram</h3>
+        <label className="block text-xs text-gray-500 mb-1">Título</label>
+        <input
+          value={content.newsletter.title}
+          onChange={(e) => updateContent("newsletter", { ...content.newsletter, title: e.target.value })}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-3"
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Usuario de Instagram</label>
+            <input
+              value={content.newsletter.instagramHandle}
+              onChange={(e) =>
+                updateContent("newsletter", { ...content.newsletter, instagramHandle: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Link a Instagram</label>
+            <input
+              value={content.newsletter.instagramHref}
+              onChange={(e) =>
+                updateContent("newsletter", { ...content.newsletter, instagramHref: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+      </section>
+
+      <div className="flex items-center gap-3 sticky bottom-4">
         <button
           onClick={handlePublish}
           disabled={saving}
-          className="bg-[#0070F3] text-white text-sm px-5 py-2.5 rounded disabled:opacity-60"
+          className="bg-[#0070F3] text-white text-sm px-5 py-2.5 rounded disabled:opacity-60 shadow-lg"
         >
           {saving ? "Publicando..." : "Publicar cambios"}
         </button>

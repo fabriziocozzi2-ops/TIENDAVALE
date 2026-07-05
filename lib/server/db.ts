@@ -3,6 +3,44 @@ import { products as seedProducts } from "@/lib/data/products";
 import { categories as seedCategories } from "@/lib/data/categories";
 import { getSupabase } from "@/lib/server/supabase";
 
+export interface HeroSlideContent {
+  title: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaHref: string;
+  image?: string;
+}
+
+export interface BannerContent {
+  title: string;
+  href: string;
+  image?: string;
+}
+
+export interface TestimonialContent {
+  text: string;
+  name: string;
+  photo?: string;
+}
+
+export interface IconInfoItemContent {
+  title: string;
+  text: string;
+}
+
+export interface HomeContent {
+  welcome: { text: string };
+  slider: { slides: HeroSlideContent[] };
+  featured: { title: string };
+  mission: { eyebrow: string; quote: string; linkLabel: string; linkHref: string };
+  featuredDetail: { productId: number | null };
+  banners: BannerContent[];
+  testimonials: TestimonialContent[];
+  handmade: { title: string; text: string; image?: string };
+  iconInfo: IconInfoItemContent[];
+  newsletter: { title: string; instagramHandle: string; instagramHref: string };
+}
+
 export interface ThemeSettings {
   logoUrl?: string;
   colors: {
@@ -14,6 +52,7 @@ export interface ThemeSettings {
   homepage: {
     sections: { id: string; label: string; visible: boolean }[];
   };
+  content: HomeContent;
 }
 
 export interface DB {
@@ -24,6 +63,78 @@ export interface DB {
   theme: ThemeSettings;
   orderSeq: number;
 }
+
+const defaultContent: HomeContent = {
+  welcome: {
+    text: "Nuestra marca tiene una tradición que se transmite hace 3 generaciones. Esto nos permite asegurar y ofrecer la más alta calidad en nuestros productos.",
+  },
+  slider: {
+    slides: [
+      {
+        title: "Distinción",
+        subtitle: "Un toque sofisticado para tus objetos del día a día",
+        ctaLabel: "Comprar",
+        ctaHref: "/billeteras",
+      },
+      {
+        title: "100% Cuero",
+        subtitle: "Todos nuestros productos están confeccionados en cuero ecológico.",
+        ctaLabel: "Comprar",
+        ctaHref: "/bolsos",
+      },
+    ],
+  },
+  featured: { title: "Los más elegidos" },
+  mission: {
+    eyebrow: "Nuestros productos",
+    quote:
+      "Nuestra misión es ofrecer objetos de alta calidad que sean completamente libres de productos de origen animal, sin comprometer el estilo ni el respeto por los animales.",
+    linkLabel: "Conocer más",
+    linkHref: "/nosotros",
+  },
+  featuredDetail: { productId: null },
+  banners: [
+    { title: "Inspirate en la nueva colección", href: "/bolsos" },
+    { title: "Todos nuestros materiales son eco friendly", href: "/relojes" },
+  ],
+  testimonials: [
+    {
+      text: "Como defensor de los derechos de los animales y consciente del impacto ambiental de la industria de la moda, siempre he buscado alternativas éticas y sostenibles. Encontrar esta tienda fue un verdadero hallazgo.",
+      name: "Maro",
+    },
+    {
+      text: "La calidad del cuero ecológico superó mis expectativas. Se nota la dedicación artesanal en cada detalle de los productos.",
+      name: "Julia",
+    },
+    {
+      text: "Compré la Mochila Austria hace seis meses y sigue como el primer día. El envío fue rapidísimo y la atención excelente.",
+      name: "Nicolás",
+    },
+  ],
+  handmade: {
+    title: "Handmade",
+    text: "Cada objeto es realizado con dedicación para ofrecerte productos de cuero de la más alta calidad.",
+  },
+  iconInfo: [
+    {
+      title: "Nosotros",
+      text: "Nuestra misión es crear productos de alta calidad que reflejen la artesanía tradicional y el lujo contemporáneo.",
+    },
+    {
+      title: "Locales",
+      text: "Tenemos 5 locales alrededor de todo el país, para que todos puedan acceder a nuestros productos.",
+    },
+    {
+      title: "Reciclados",
+      text: "Nuestros productos están 100% reciclados, son amables con el medio ambiente y los procesos productivos.",
+    },
+  ],
+  newsletter: {
+    title: "Registrate y recibí nuestras ofertas.",
+    instagramHandle: "somos.morelia.accesorios",
+    instagramHref: "#",
+  },
+};
 
 const defaultTheme: ThemeSettings = {
   colors: {
@@ -47,6 +158,7 @@ const defaultTheme: ThemeSettings = {
       { id: "newsletter", label: "Newsletter e Instagram", visible: true },
     ],
   },
+  content: defaultContent,
 };
 
 export async function readDB(): Promise<DB> {
@@ -84,6 +196,9 @@ export async function readDB(): Promise<DB> {
   if (!theme) {
     await supabase.from("app_state").upsert({ key: "theme", value: defaultTheme });
     theme = defaultTheme;
+  } else if (!theme.content) {
+    theme = { ...theme, content: defaultContent };
+    await supabase.from("app_state").upsert({ key: "theme", value: theme });
   }
 
   let orderSeq = stateMap.get("order_seq") as number | undefined;

@@ -96,10 +96,3 @@ export interface Coupon {
   uses: number;
   active: boolean;
 }
-
-export interface Testimonial {
-  id: number;
-  text: string;
-  name: string;
-  photo?: string;
-}

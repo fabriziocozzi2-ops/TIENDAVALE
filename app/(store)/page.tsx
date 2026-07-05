@@ -1,5 +1,5 @@
 import { readDB } from "@/lib/server/db";
-import { getFeaturedHomeProducts, getProductBySlug, getAllProducts } from "@/lib/server/catalog";
+import { getFeaturedHomeProducts, getAllProducts } from "@/lib/server/catalog";
 import HeroSlider from "@/components/ui/HeroSlider";
 import Tagline from "@/components/sections/Tagline";
 import FeaturedProducts from "@/components/sections/FeaturedProducts";
@@ -20,8 +20,10 @@ export default async function Home() {
     getFeaturedHomeProducts(),
     getAllProducts(),
   ]);
+  const content = db.theme.content;
   const featuredProduct =
-    (await getProductBySlug("morral-indiana")) ?? allProducts[0];
+    allProducts.find((p) => p.id === content.featuredDetail.productId) ??
+    allProducts[0];
 
   const visibleIds = new Set(
     db.theme.homepage.sections.filter((s) => s.visible).map((s) => s.id)
@@ -29,19 +31,21 @@ export default async function Home() {
   const order = db.theme.homepage.sections.map((s) => s.id);
 
   const sections: Record<string, React.ReactNode> = {
-    welcome: <Tagline key="welcome" />,
-    slider: <HeroSlider key="slider" />,
-    featured: <FeaturedProducts key="featured" products={featuredProducts} />,
+    welcome: <Tagline key="welcome" text={content.welcome.text} />,
+    slider: <HeroSlider key="slider" slides={content.slider.slides} />,
+    featured: (
+      <FeaturedProducts key="featured" products={featuredProducts} title={content.featured.title} />
+    ),
     categories: <CategoryShowcase key="categories" categories={db.categories} />,
-    mission: <BrandMission key="mission" />,
+    mission: <BrandMission key="mission" {...content.mission} />,
     featuredDetail: featuredProduct ? (
       <FeaturedProductDetail key="featuredDetail" product={featuredProduct} />
     ) : null,
-    banners: <TwoBanners key="banners" />,
-    testimonials: <Testimonials key="testimonials" />,
-    handmade: <HandmadeHero key="handmade" />,
-    iconInfo: <IconInfo key="iconInfo" />,
-    newsletter: <NewsletterInstagram key="newsletter" />,
+    banners: <TwoBanners key="banners" banners={content.banners} />,
+    testimonials: <Testimonials key="testimonials" testimonials={content.testimonials} />,
+    handmade: <HandmadeHero key="handmade" {...content.handmade} />,
+    iconInfo: <IconInfo key="iconInfo" items={content.iconInfo} />,
+    newsletter: <NewsletterInstagram key="newsletter" {...content.newsletter} />,
   };
 
   return (

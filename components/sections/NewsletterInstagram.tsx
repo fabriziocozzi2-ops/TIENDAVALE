@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 
-export default function NewsletterInstagram() {
+export default function NewsletterInstagram({
+  title,
+  instagramHandle,
+  instagramHref,
+}: {
+  title: string;
+  instagramHandle: string;
+  instagramHref: string;
+}) {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -13,9 +21,7 @@ export default function NewsletterInstagram() {
 
   return (
     <section className="py-20 px-4 text-center">
-      <h2 className="font-serif text-2xl md:text-3xl mb-6">
-        Registrate y recibí nuestras ofertas.
-      </h2>
+      <h2 className="font-serif text-2xl md:text-3xl mb-6">{title}</h2>
       {submitted ? (
         <p className="text-sm text-[var(--color-accent)]">
           ¡Gracias por suscribirte!
@@ -43,10 +49,8 @@ export default function NewsletterInstagram() {
       )}
 
       <div className="mt-14">
-        <p className="text-sm text-morelia-text-soft mb-1">
-          somos.morelia.accesorios
-        </p>
-        <a href="#" className="text-sm underline underline-offset-4">
+        <p className="text-sm text-morelia-text-soft mb-1">{instagramHandle}</p>
+        <a href={instagramHref} className="text-sm underline underline-offset-4">
           Ver perfil
         </a>
       </div>
