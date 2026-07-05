@@ -9,6 +9,8 @@ import ProductImage from "@/components/ui/ProductImage";
 import ProductCard from "@/components/ui/ProductCard";
 import CustomizationForm, { OverlayCharm } from "@/components/ui/CustomizationForm";
 
+const CHARM_SIZE_PCT = 18; // % of the main image's width/height
+
 function DraggableCharm({
   image,
   x,
@@ -35,7 +37,8 @@ function DraggableCharm({
     const rect = containerRef.current.getBoundingClientRect();
     const relX = ((e.clientX - rect.left) / rect.width) * 100;
     const relY = ((e.clientY - rect.top) / rect.height) * 100;
-    onMove(Math.min(94, Math.max(0, relX)), Math.min(94, Math.max(0, relY)));
+    const max = 100 - CHARM_SIZE_PCT;
+    onMove(Math.min(max, Math.max(0, relX)), Math.min(max, Math.max(0, relY)));
   }
 
   function handlePointerUp() {
@@ -48,8 +51,8 @@ function DraggableCharm({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      className="absolute w-12 h-12 cursor-grab active:cursor-grabbing touch-none select-none drop-shadow-md"
-      style={{ left: `${x}%`, top: `${y}%` }}
+      className="absolute cursor-grab active:cursor-grabbing touch-none select-none drop-shadow-md"
+      style={{ left: `${x}%`, top: `${y}%`, width: `${CHARM_SIZE_PCT}%`, aspectRatio: "1 / 1" }}
       title="Arrastrá para mover"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
